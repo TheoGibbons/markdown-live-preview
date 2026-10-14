@@ -103,6 +103,9 @@ test('manifest and icons meet Chromium installation requirements at the deployme
         const manifest = await page.evaluate(async (url) => (await fetch(url)).json(), manifestURL);
         expect(new URL(manifest.start_url, manifestURL).href).toBe(baseURL);
         expect(new URL(manifest.scope, manifestURL).href).toBe(baseURL);
+        // The app's identity must include the deployment path, or other PWAs on the same origin replace it.
+        const startURL = new URL(manifest.start_url, manifestURL);
+        expect(manifest.id ? new URL(manifest.id, startURL.origin).href : startURL.href).toBe(baseURL);
         expect(manifest.display).toBe('standalone');
         for (const size of [192, 512]) {
             const icon = manifest.icons.find((item) => item.sizes === `${size}x${size}`);

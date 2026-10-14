@@ -23,7 +23,6 @@ export default {
             name: 'Markdown Live Preview',
             short_name: 'Markdown Preview',
             description: 'A private Markdown editor that works offline.',
-            id: './',
             start_url: './',
             scope: './',
             display: 'standalone',
