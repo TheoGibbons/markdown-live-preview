@@ -14,6 +14,7 @@ const init = () => {
     const localStorageKey = 'last_state';
     const localStorageScrollBarKey = 'scroll_bar_settings';
     const localStorageThemeKey = 'theme_settings';
+    const localStorageSplitRatioKey = 'com.markdownlivepreview_split_ratio';
     const confirmationMessage = 'Are you sure you want to reset? Your changes will be lost.';
     let mermaidRenderTimer = null;
     let mermaidRenderVersion = 0;
@@ -559,6 +560,33 @@ This web site is using ${"`"}markedjs/marked${"`"}.
 
         let isDragging = false;
 
+        try {
+            const savedRatio = JSON.parse(localStorage.getItem(localStorageSplitRatioKey));
+            if (Number.isFinite(savedRatio) && savedRatio > 0 && savedRatio < 1) {
+                lastLeftRatio = savedRatio;
+            }
+        } catch (e) {
+            // Use the default split if storage is unavailable or invalid.
+        }
+
+        const saveSplitRatio = () => {
+            try {
+                localStorage.setItem(localStorageSplitRatioKey, JSON.stringify(lastLeftRatio));
+            } catch (e) {
+                // Keep resizing usable when browser storage is unavailable.
+            }
+        };
+
+        const applySplitRatio = () => {
+            const availableWidth = container.getBoundingClientRect().width - divider.offsetWidth;
+            const minWidth = Math.min(100, availableWidth / 2);
+            const leftWidth = Math.max(minWidth, Math.min(availableWidth * lastLeftRatio, availableWidth - minWidth));
+            leftPane.style.width = leftWidth + 'px';
+            rightPane.style.width = (availableWidth - leftWidth) + 'px';
+        };
+
+        applySplitRatio();
+
         divider.addEventListener('mouseenter', () => {
             divider.classList.add('hover');
         });
@@ -576,13 +604,9 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         });
 
         divider.addEventListener('dblclick', () => {
-            const containerRect = container.getBoundingClientRect();
-            const totalWidth = containerRect.width;
-            const dividerWidth = divider.offsetWidth;
-            const halfWidth = (totalWidth - dividerWidth) / 2;
-
-            leftPane.style.width = halfWidth + 'px';
-            rightPane.style.width = halfWidth + 'px';
+            lastLeftRatio = 0.5;
+            applySplitRatio();
+            saveSplitRatio();
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -594,7 +618,7 @@ This web site is using ${"`"}markedjs/marked${"`"}.
             const dividerWidth = divider.offsetWidth;
 
             // Prevent overlap or out-of-bounds
-            const minWidth = 100;
+            const minWidth = Math.min(100, (totalWidth - dividerWidth) / 2);
             const maxWidth = totalWidth - minWidth - dividerWidth;
             const leftWidth = Math.max(minWidth, Math.min(offsetX, maxWidth));
             leftPane.style.width = leftWidth + 'px';
@@ -609,21 +633,11 @@ This web site is using ${"`"}markedjs/marked${"`"}.
                 divider.classList.remove('hover');
                 document.body.style.cursor = 'default';
                 document.body.style.userSelect = '';
+                saveSplitRatio();
             }
         });
 
-        window.addEventListener('resize', () => {
-            const containerRect = container.getBoundingClientRect();
-            const totalWidth = containerRect.width;
-            const dividerWidth = divider.offsetWidth;
-            const availableWidth = totalWidth - dividerWidth;
-
-            const newLeft = availableWidth * lastLeftRatio;
-            const newRight = availableWidth * (1 - lastLeftRatio);
-
-            leftPane.style.width = newLeft + 'px';
-            rightPane.style.width = newRight + 'px';
-        });
+        window.addEventListener('resize', applySplitRatio);
     };
 
     // ----- entry point -----
