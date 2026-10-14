@@ -3,6 +3,8 @@ import * as monaco from 'monaco-editor';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import mermaid from 'mermaid';
+import { setupPwa } from './pwa.js';
+import { setupAutosave } from './autosave.js';
 
 const init = () => {
     let hasEdited = false;
@@ -55,11 +57,11 @@ _You **can** combine them_
 
 ## Images
 
-![This is an alt text.](/image/Markdown-mark.svg "This is a sample image.")
+![This is an alt text.](${import.meta.env.BASE_URL}image/Markdown-mark.svg "This is a sample image.")
 
 ## Links
 
-You may be using [Markdown Live Preview](https://markdownlivepreview.com/).
+You may be using [Markdown Live Preview](${import.meta.env.BASE_URL}).
 
 ## Blockquotes
 
@@ -299,8 +301,8 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     };
 
     // ----- preview CSS loader (switch github-markdown css) -----
-    const PREVIEW_CSS_LIGHT = 'css/github-markdown-light.css?v=a1a198514565';
-    const PREVIEW_CSS_DARK = 'css/github-markdown-dark_dimmed.css?v=5d3f5d9d207c';
+    const PREVIEW_CSS_LIGHT = `${import.meta.env.BASE_URL}css/github-markdown-light.css?v=e3dc51b8a261`;
+    const PREVIEW_CSS_DARK = `${import.meta.env.BASE_URL}css/github-markdown-dark_dimmed.css?v=df221bf84b9d`;
 
     let setPreviewCss = (useDark) => {
         const link = document.getElementById('gh-markdown-link');
@@ -651,8 +653,10 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     initThemeToggle(themeSettings);
 
     setupDivider();
+    setupAutosave(editor, presetValue);
 };
 
 window.addEventListener("load", () => {
     init();
+    setupPwa();
 });

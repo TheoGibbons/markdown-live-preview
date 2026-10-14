@@ -13,7 +13,7 @@ export function updateCssVersions() {
     for (const name of ['index.html', 'src/main.js']) {
         const path = new URL(name, root);
         const original = readFileSync(path, 'utf8');
-        const updated = original.replace(/css\/([\w-]+\.css)\?v=[^'"\s]+/g,
+        const updated = original.replace(/css\/([\w-]+\.css)\?v=[^'"`\s]+/g,
             (url, file) => versions.has(file) ? `css/${file}?v=${versions.get(file)}` : url);
         if (updated !== original) {
             writeFileSync(path, updated);
