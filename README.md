@@ -1,8 +1,13 @@
 # Markdown Live Preview
 
-[Open Markdown Live Preview](https://theogibbons.github.io/markdown-live-preview/)
+A tiny web tool to preview Markdown formatted text.
 
 A fork of [Markdown Live Preview](https://github.com/tanabe/markdown-live-preview), with local autosaves and installable offline support.
+
+## Use It
+
+[Use it](https://theogibbons.github.io/markdown-live-preview/)
+
 
 ## Autosaves
 
