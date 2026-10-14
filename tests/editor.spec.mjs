@@ -6,7 +6,7 @@ async function openEditor(page) {
     await page.goto('./');
     await expect(page.locator('.monaco-editor textarea')).toBeVisible();
     await expect(page.locator('#output .mermaid svg')).toBeVisible();
-    await expect(page.locator('#offline-status')).toHaveText('Ready offline');
+    await page.evaluate(() => navigator.serviceWorker.ready);
     await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
 }
 
@@ -62,7 +62,7 @@ test('all built-in assets, unused diagram code and the draft work after an offli
     const cdp = await context.newCDPSession(page);
     await cdp.send('Network.clearBrowserCache');
     await page.reload();
-    await expect(page.locator('#offline-status')).toHaveText('Ready offline');
+    await expect(page.locator('footer')).toHaveCount(0);
     await expect(page.locator('#output .mermaid svg')).toBeVisible();
     expect(await page.locator('#output img').evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
 
@@ -130,7 +130,7 @@ test('autosaves changed text every 10 seconds, persists history, previews and re
     expect(await autosaves(page)).toEqual([]);
     await page.clock.fastForward(10_000);
     expect(await autosaves(page)).toMatchObject([{
-        name: 'Autosave (2026-10-13 3:50:44 PM)', content: 'First saved draft'
+        name: 'Autosave (2026-10-13 3:50:44 PM) First saved dra...', content: 'First saved draft'
     }]);
     await page.clock.fastForward(20_000);
     expect(await autosaves(page)).toHaveLength(1);
@@ -141,10 +141,10 @@ test('autosaves changed text every 10 seconds, persists history, previews and re
     expect(await autosaves(page)).toHaveLength(2);
     await page.reload();
     await expect(page.locator('#output')).toHaveText('Second saved draft');
-    await page.locator('#autosave-dropdown summary').click();
+    await page.locator('#autosave-dropdown summary').hover();
     const entries = page.locator('#autosave-list button');
     await expect(entries).toHaveCount(2);
-    await expect(entries.first()).toHaveText('Autosave (2026-10-13 3:50:54 PM)');
+    await expect(entries.first()).toHaveText('Autosave (2026-10-13 3:50:54 PM) Second saved dr...');
     await entries.last().hover();
     await expect(page.locator('#autosave-preview pre')).toHaveText('First saved draft');
     await entries.last().focus();
@@ -167,8 +167,9 @@ test('hover preview shows source without requesting images and stays within a mo
     });
     await page.setViewportSize({ width: 390, height: 844 });
     await openEditor(page);
-    await page.locator('#autosave-dropdown summary').click();
+    await page.locator('#autosave-dropdown summary').hover();
     await page.locator('#autosave-list button').hover();
+    await expect(page.locator('#autosave-list button')).toHaveText('Autosave (2026-10-13 3:50:44 PM) ![Private image...');
     await expect(page.locator('#autosave-preview pre')).toHaveText(content);
     await expect(page.locator('#autosave-preview img')).toHaveCount(0);
     expect(remoteRequests).toEqual([]);
@@ -181,6 +182,66 @@ test('hover preview shows source without requesting images and stays within a mo
     await page.locator('#autosave-list button').press('Escape');
     await expect(page.locator('#autosave-preview')).toBeHidden();
     await expect(page.locator('#autosave-menu')).toBeHidden();
+});
+
+test('hover menu stays open while crossing into a preview to scroll, select and copy text', async ({ page, context }) => {
+    const content = Array.from({ length: 80 }, (_, index) => `COPY_THIS_TEXT_${index}: This is a long saved draft.`).join('\n');
+    await page.addInitScript(({ key, content }) => localStorage.setItem(key, JSON.stringify([{
+        id: 'long-preview', name: 'Autosave (2026-10-14 9:45:24 AM)', content
+    }])), { key: AUTOSAVES_KEY, content });
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.clock.install();
+    await openEditor(page);
+    await openDraft(page, 'Pending new draft');
+    const summary = page.locator('#autosave-dropdown summary');
+    const menu = page.locator('#autosave-menu');
+    const preview = page.locator('#autosave-preview');
+
+    await summary.hover();
+    await expect(menu).toBeVisible();
+    await page.mouse.move(1100, 700);
+    await page.clock.fastForward(500);
+    await expect(menu).toBeHidden();
+
+    await summary.hover();
+    const entry = page.locator('#autosave-list button');
+    await expect(entry).toHaveText('Autosave (2026-10-14 9:45:24 AM) COPY_THIS_TEXT_...');
+    await entry.hover();
+    const box = await entry.boundingBox();
+    await page.mouse.move(box.x + box.width + 10, box.y + box.height / 2);
+    await page.clock.fastForward(100);
+    await expect(preview).toBeVisible();
+    await preview.hover();
+    await page.clock.fastForward(500);
+    await expect(preview).toBeVisible();
+    await expect(menu).toBeVisible();
+
+    await page.mouse.wheel(0, 600);
+    await expect.poll(() => preview.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await preview.evaluate((element) => { element.scrollTop = 0; });
+    const selectionBox = await preview.locator('pre').evaluate((element) => {
+        const range = document.createRange();
+        range.setStart(element.firstChild, 0);
+        range.setEnd(element.firstChild, 15);
+        const rect = range.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, middle: rect.top + rect.height / 2 };
+    });
+    await page.mouse.move(selectionBox.left + 1, selectionBox.middle);
+    await page.mouse.down();
+    await page.mouse.move(selectionBox.right - 1, selectionBox.middle, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(() => page.evaluate(() => window.getSelection().toString())).toBe('COPY_THIS_TEXT_');
+    await page.clock.fastForward(10_000);
+    await expect(preview).toBeVisible();
+    await expect(menu).toBeVisible();
+    await expect.poll(() => autosaves(page)).toHaveLength(2);
+    // Updating the autosave list must preserve a selection in the preview.
+    expect(await page.evaluate(() => window.getSelection().toString())).toBe('COPY_THIS_TEXT_');
+    await page.keyboard.press('ControlOrMeta+C');
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('COPY_THIS_TEXT_');
+    await page.locator('#editor').click({ position: { x: 20, y: 100 } });
+    await expect(preview).toBeHidden();
+    await expect(menu).toBeHidden();
 });
 
 test('storage failure preserves history and retries the pending autosave', async ({ page }) => {

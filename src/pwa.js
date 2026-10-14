@@ -1,7 +1,6 @@
 import { registerSW } from 'virtual:pwa-register';
 
 export function setupPwa() {
-    const status = document.querySelector('#offline-status');
     const installButton = document.querySelector('#install-button');
     const updateButton = document.querySelector('#update-button');
     let installPrompt;
@@ -27,23 +26,13 @@ export function setupPwa() {
 
     if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
 
-    status.textContent = 'Preparing offline access…';
     const updateSW = registerSW({
         immediate: true,
-        onOfflineReady() {
-            status.textContent = 'Ready offline';
-        },
         onNeedRefresh() {
-            status.textContent = 'Update available';
             updateButton.hidden = false;
         },
-        onRegisteredSW(_url, registration) {
-            if (registration?.active && !registration.waiting && updateButton.hidden) {
-                status.textContent = 'Ready offline';
-            }
-        },
-        onRegisterError() {
-            status.textContent = 'Offline setup failed. Reload to retry.';
+        onRegisterError(error) {
+            console.warn('Unable to enable offline support.', error);
         }
     });
 

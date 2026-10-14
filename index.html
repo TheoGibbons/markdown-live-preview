@@ -34,7 +34,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" type="text/css" href="%BASE_URL%css/style.css?v=7d15534c2266">
+    <link rel="stylesheet" type="text/css" href="%BASE_URL%css/style.css?v=59181cf19681">
     <link rel="icon" type="image/png" href="%BASE_URL%favicon.png">
     <script type="module" src="/src/main.js?v=1.13.0"></script>
     <title>Markdown Live Preview</title>
@@ -59,6 +59,7 @@
               </div>
             </details>
             <div><button type="button" id="install-button" hidden>Install</button></div>
+            <div><button type="button" id="update-button" hidden>Update</button></div>
             <div id="sync-button">
               <input type="checkbox" id="sync-scroll-checkbox"><label for="sync-scroll-checkbox">Sync scroll</label>
               <span style="margin-left:12px;"><input type="checkbox" id="theme-checkbox"><label for="theme-checkbox">Dark mode</label></span>
@@ -84,10 +85,6 @@
         </div>
     </div>
 
-    <footer>
-      <span id="offline-status" role="status"></span>
-      <button type="button" id="update-button" hidden>Update</button>
-    </footer>
-    <div id="autosave-preview" hidden><pre></pre></div>
+    <div id="autosave-preview" role="region" aria-label="Autosave preview" tabindex="0" hidden><pre></pre></div>
   </body>
 </html>

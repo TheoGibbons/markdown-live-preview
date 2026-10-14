@@ -13,7 +13,7 @@ A fork of [Markdown Live Preview](https://github.com/tanabe/markdown-live-previe
 
 Markdown rendering and diagram generation happen in your browser. There is no analytics or draft upload, and all application scripts, fonts, styles, and images are served locally.
 
-The current draft is restored when you reopen the editor. Every 10 seconds, changed content also creates a separate snapshot in browser local storage, named like `Autosave (2026-10-13 3:50:44 PM)` using your local time. Open **Autosaves** in the top menu to select a snapshot. Hover over an entry, or focus it with the keyboard, to preview its text before loading it. Unchanged content does not create extra snapshots.
+The current draft is restored when you reopen the editor. Every 10 seconds, changed content also creates a separate snapshot in browser local storage, named like `Autosave (2026-10-13 3:50:44 PM) First saved dra...` using your local time and the first 15 characters of the text. Hover over **Autosaves** in the top menu to open the dropdown, then hover over an entry to preview its text before loading it. You can move into the preview to scroll or select text and copy it with Ctrl+C (Cmd+C on macOS). Keyboard and touch activation also work. Unchanged content does not create extra snapshots.
 
 Autosaves stay in this browser until its site data is cleared. If browser storage is full or unavailable, the menu reports an error and preserves the existing history.
 
@@ -21,9 +21,9 @@ URLs you enter in Markdown can still make network requests: for example, an imag
 
 ## Offline use and installation
 
-Open the site once while connected and wait for **Ready offline** in the footer. The editor, local images, both themes, all diagram types, autosaves, file opening, copying, and PDF export then work without internet access. Images hosted at URLs you enter require their own network connection.
+Open the site once while connected so it can cache its app files. Once caching is complete, the editor, local images, both themes, all diagram types, autosaves, file opening, copying, and PDF export work without internet access. Images hosted at URLs you enter require their own network connection.
 
-Use **Install** when the browser offers it, or the browser's install/add-to-home-screen menu. Available updates show an **Update** button in the footer; the app waits for you to choose when to reload.
+Use **Install** when the browser offers it, or the browser's install/add-to-home-screen menu. Available updates show an **Update** button in the top menu; the app waits for you to choose when to reload.
 
 ## Setup
 

@@ -67,7 +67,8 @@ header a:hover {
 }
 
 #open-button,
-#install-button {
+#install-button,
+#update-button {
     margin-left: 16px;
     padding: 0;
     border: 0;
@@ -78,7 +79,8 @@ header a:hover {
 }
 
 #open-button:hover,
-#install-button:hover {
+#install-button:hover,
+#update-button:hover {
     text-decoration: underline;
 }
 
@@ -171,7 +173,8 @@ header a:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-shadow: 0 4px 16px #0003;
-    pointer-events: none;
+    user-select: text;
+    overscroll-behavior: contain;
     box-sizing: border-box;
 }
 
@@ -201,19 +204,6 @@ header input[type="checkbox"] {
 #github a {
   display: block;
   width: 16px;
-}
-
-footer {
-  padding: 8px;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #fff;
-  color: #555;
-  font-size: 12px;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
 }
 
 #container {
@@ -288,9 +278,9 @@ footer {
   }
 
   header,
-  footer,
   #edit,
-  #split-divider {
+  #split-divider,
+  #autosave-preview {
     display: none !important;
   }
 
@@ -439,11 +429,6 @@ footer {
   background: #768390;
 }
 
-[data-theme="dark"] footer {
-  background-color: #333;
-  color: #ddd;
-}
-
 [data-theme="dark"] #autosave-menu,
 [data-theme="dark"] #autosave-preview {
   background: #22272e;
@@ -454,14 +439,4 @@ footer {
 [data-theme="dark"] #autosave-list button:hover,
 [data-theme="dark"] #autosave-list button:focus-visible {
   background: #373e47;
-}
-
-#update-button {
-  margin-left: 8px;
-  color: inherit;
-  font: inherit;
-  background: none;
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  cursor: pointer;
 }

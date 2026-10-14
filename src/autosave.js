@@ -9,6 +9,12 @@ function formatName(date) {
     return `Autosave (${day} ${time})`;
 }
 
+function nameWithExcerpt(name, content) {
+    const timestamp = name.match(/^Autosave \([^)]*\)/)?.[0] || name;
+    const excerpt = Array.from(content).slice(0, 15).join('').replace(/\s/g, ' ');
+    return `${timestamp} ${excerpt}...`;
+}
+
 function readAutosaves() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     if (!Array.isArray(saved) || saved.some((item) => !item ||
@@ -28,22 +34,70 @@ export function setupAutosave(editor, loadContent) {
     const menu = document.querySelector('#autosave-menu');
     const preview = document.querySelector('#autosave-preview');
     let lastSavedContent = editor.getValue();
+    let previewTimer;
+    let closeTimer;
+    let previewId;
+
+    const cancelClose = () => clearTimeout(closeTimer);
+    const isPreviewActive = () => preview.matches(':hover') || preview.contains(document.activeElement);
 
     const hidePreview = () => {
+        clearTimeout(previewTimer);
         preview.hidden = true;
+        previewId = null;
     };
 
-    const showPreview = (button, content) => {
+    const closeMenu = () => {
+        cancelClose();
+        dropdown.open = false;
+        hidePreview();
+    };
+
+    const scheduleClose = () => {
+        cancelClose();
+        // Allow time to cross the gaps between the summary, list and preview.
+        closeTimer = setTimeout(() => {
+            if (!dropdown.matches(':hover') && !dropdown.contains(document.activeElement) && !isPreviewActive()) {
+                closeMenu();
+            }
+        }, 300);
+    };
+
+    const scheduleHidePreview = () => {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(() => {
+            if (!isPreviewActive() && !list.contains(document.activeElement)) hidePreview();
+        }, 300);
+    };
+
+    const showPreview = (button, autosave) => {
+        cancelClose();
+        clearTimeout(previewTimer);
         // Show source text without rendering URLs, HTML or diagrams in the popup.
-        preview.querySelector('pre').textContent = content || '(Empty document)';
+        if (previewId !== autosave.id) {
+            preview.querySelector('pre').textContent = autosave.content || '(Empty document)';
+            preview.scrollTop = 0;
+            previewId = autosave.id;
+        }
         preview.hidden = false;
+        preview.style.maxHeight = 'min(420px, 60vh)';
         const rect = button.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
         const width = preview.offsetWidth;
         const height = preview.offsetHeight;
-        const right = rect.right + 12;
-        const left = right + width <= window.innerWidth - 8 ? right : rect.left - width - 12;
-        preview.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
-        preview.style.top = `${Math.max(8, Math.min(rect.top, window.innerHeight - height - 8))}px`;
+        const right = menuRect.right + 12;
+        const left = menuRect.left - width - 12;
+        if (right + width <= window.innerWidth - 8 || left >= 8) {
+            preview.style.left = `${right + width <= window.innerWidth - 8 ? right : left}px`;
+            preview.style.top = `${Math.max(8, Math.min(rect.top, window.innerHeight - height - 8))}px`;
+        } else {
+            // Stack the panels on narrow screens so the preview cannot cover a save button.
+            menu.style.maxHeight = `${Math.min(420, Math.max(48, (window.innerHeight - menuRect.top - 24) / 2))}px`;
+            const top = menu.getBoundingClientRect().bottom + 12;
+            preview.style.left = `${Math.max(8, Math.min(menuRect.left, window.innerWidth - width - 8))}px`;
+            preview.style.top = `${top}px`;
+            preview.style.maxHeight = `${Math.max(40, Math.min(420, window.innerHeight - top - 8))}px`;
+        }
     };
 
     const reportError = () => {
@@ -52,24 +106,24 @@ export function setupAutosave(editor, loadContent) {
     };
 
     const renderList = (autosaves) => {
-        hidePreview();
+        // Keep a selected preview intact when a new autosave updates the list.
+        if (!autosaves.some((autosave) => autosave.id === previewId)) hidePreview();
         list.replaceChildren();
         empty.hidden = autosaves.length > 0;
         for (const autosave of [...autosaves].reverse()) {
             const item = document.createElement('li');
             const button = document.createElement('button');
             button.type = 'button';
-            button.textContent = autosave.name;
-            button.addEventListener('mouseenter', () => showPreview(button, autosave.content));
-            button.addEventListener('mouseleave', hidePreview);
-            button.addEventListener('focus', () => showPreview(button, autosave.content));
-            button.addEventListener('blur', hidePreview);
+            button.textContent = nameWithExcerpt(autosave.name, autosave.content);
+            button.addEventListener('mouseenter', () => showPreview(button, autosave));
+            button.addEventListener('mouseleave', scheduleHidePreview);
+            button.addEventListener('focus', () => showPreview(button, autosave));
+            button.addEventListener('blur', scheduleHidePreview);
             button.addEventListener('click', () => {
                 loadContent(autosave.content);
                 // Restoring an existing snapshot should not create a duplicate.
                 lastSavedContent = editor.getValue();
-                dropdown.open = false;
-                hidePreview();
+                closeMenu();
             });
             item.appendChild(button);
             list.appendChild(item);
@@ -94,7 +148,7 @@ export function setupAutosave(editor, loadContent) {
             const date = new Date();
             autosaves.push({
                 id: crypto.randomUUID(),
-                name: formatName(date),
+                name: nameWithExcerpt(formatName(date), content),
                 savedAt: date.toISOString(),
                 content
             });
@@ -109,6 +163,36 @@ export function setupAutosave(editor, loadContent) {
         }
     }, INTERVAL_MS);
 
+    dropdown.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'touch') return;
+        cancelClose();
+        dropdown.open = true;
+    });
+    dropdown.addEventListener('pointerleave', scheduleClose);
+    summary.addEventListener('click', (event) => {
+        // Retain native keyboard/touch activation without closing a hovered menu.
+        if (event.detail && window.matchMedia('(hover: hover)').matches) {
+            event.preventDefault();
+            dropdown.open = true;
+        }
+    });
+    preview.addEventListener('pointerenter', () => {
+        cancelClose();
+        clearTimeout(previewTimer);
+    });
+    preview.addEventListener('pointerleave', () => {
+        scheduleClose();
+        scheduleHidePreview();
+    });
+    preview.addEventListener('focusin', () => {
+        cancelClose();
+        clearTimeout(previewTimer);
+    });
+    preview.addEventListener('focusout', () => {
+        scheduleClose();
+        scheduleHidePreview();
+    });
+
     dropdown.addEventListener('toggle', () => {
         if (!dropdown.open) {
             hidePreview();
@@ -120,19 +204,16 @@ export function setupAutosave(editor, loadContent) {
         menu.style.maxHeight = `${Math.max(48, Math.min(420, window.innerHeight - rect.bottom - 16))}px`;
     });
     document.addEventListener('click', (event) => {
-        if (!dropdown.contains(event.target)) dropdown.open = false;
+        if (!dropdown.contains(event.target) && !preview.contains(event.target)) closeMenu();
     });
-    dropdown.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            dropdown.open = false;
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && dropdown.open) {
+            closeMenu();
             summary.focus();
         }
     });
     menu.addEventListener('scroll', hidePreview);
-    window.addEventListener('resize', () => {
-        dropdown.open = false;
-        hidePreview();
-    });
+    window.addEventListener('resize', closeMenu);
     window.addEventListener('storage', (event) => {
         if (event.key === STORAGE_KEY || event.key === null) refreshList();
     });
