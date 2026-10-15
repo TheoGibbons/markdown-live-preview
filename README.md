@@ -13,7 +13,7 @@ A fork of [Markdown Live Preview](https://github.com/tanabe/markdown-live-previe
 
 Markdown rendering and diagram generation happen in your browser. There is no analytics or draft upload, and all application scripts, fonts, styles, and images are served locally.
 
-The current draft is restored when you reopen the editor. Every 10 seconds, changed content also creates a separate snapshot in browser local storage, named like `Autosave (2026-10-13 3:50:44 PM) First saved dra...` using your local time and the first 15 characters of the text. Hover over **Autosaves** in the top menu to open the dropdown, then hover over an entry to preview its text before loading it. You can move into the preview to scroll or select text and copy it with Ctrl+C (Cmd+C on macOS). Keyboard and touch activation also work. Unchanged content does not create extra snapshots.
+The current draft is restored when you reopen the editor. Every 10 seconds, changed content also creates a separate snapshot in browser local storage, named like `Autosave (2026-10-13 3:50:44 PM) First saved draft` using your local time and up to 200 characters of the text. Names stay on one line in the 660px-wide dropdown (narrower on small screens), with an ellipsis when they overflow. Hover over **Autosaves** in the top menu to open the dropdown, then hover over an entry to preview its text before loading it. You can move into the preview to scroll or select text and copy it with Ctrl+C (Cmd+C on macOS). Keyboard and touch activation also work. Unchanged content does not create extra snapshots.
 
 Autosaves stay in this browser until its site data is cleared. If browser storage is full or unavailable, the menu reports an error and preserves the existing history.
 

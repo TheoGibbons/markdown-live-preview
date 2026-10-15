@@ -133,7 +133,7 @@ test('autosaves changed text every 10 seconds, persists history, previews and re
     expect(await autosaves(page)).toEqual([]);
     await page.clock.fastForward(10_000);
     expect(await autosaves(page)).toMatchObject([{
-        name: 'Autosave (2026-10-13 3:50:44 PM) First saved dra...', content: 'First saved draft'
+        name: 'Autosave (2026-10-13 3:50:44 PM) First saved draft', content: 'First saved draft'
     }]);
     await page.clock.fastForward(20_000);
     expect(await autosaves(page)).toHaveLength(1);
@@ -147,7 +147,7 @@ test('autosaves changed text every 10 seconds, persists history, previews and re
     await page.locator('#autosave-dropdown summary').hover();
     const entries = page.locator('#autosave-list button');
     await expect(entries).toHaveCount(2);
-    await expect(entries.first()).toHaveText('Autosave (2026-10-13 3:50:54 PM) Second saved dr...');
+    await expect(entries.first()).toHaveText('Autosave (2026-10-13 3:50:54 PM) Second saved draft');
     await entries.last().hover();
     await expect(page.locator('#autosave-preview pre')).toHaveText('First saved draft');
     await entries.last().focus();
@@ -172,7 +172,7 @@ test('hover preview shows source without requesting images and stays within a mo
     await openEditor(page);
     await page.locator('#autosave-dropdown summary').hover();
     await page.locator('#autosave-list button').hover();
-    await expect(page.locator('#autosave-list button')).toHaveText('Autosave (2026-10-13 3:50:44 PM) ![Private image...');
+    await expect(page.locator('#autosave-list button')).toHaveText(`Autosave (2026-10-13 3:50:44 PM) ${content.replace(/\s+/g, ' ')}`);
     await expect(page.locator('#autosave-preview pre')).toHaveText(content);
     await expect(page.locator('#autosave-preview img')).toHaveCount(0);
     expect(remoteRequests).toEqual([]);
@@ -208,7 +208,7 @@ test('hover menu stays open while crossing into a preview to scroll, select and 
 
     await summary.hover();
     const entry = page.locator('#autosave-list button');
-    await expect(entry).toHaveText('Autosave (2026-10-14 9:45:24 AM) COPY_THIS_TEXT_...');
+    await expect(entry).toContainText('Autosave (2026-10-14 9:45:24 AM) COPY_THIS_TEXT_0: This is a long saved draft. COPY_THIS_TEXT_1:');
     await entry.hover();
     const box = await entry.boundingBox();
     await page.mouse.move(box.x + box.width + 10, box.y + box.height / 2);

@@ -11,8 +11,8 @@ function formatName(date) {
 
 function nameWithExcerpt(name, content) {
     const timestamp = name.match(/^Autosave \([^)]*\)/)?.[0] || name;
-    const excerpt = Array.from(content).slice(0, 15).join('').replace(/\s/g, ' ');
-    return `${timestamp} ${excerpt}...`;
+    const excerpt = Array.from(content.replace(/\s+/g, ' ').trim());
+    return `${timestamp} ${excerpt.slice(0, 200).join('')}${excerpt.length > 200 ? '…' : ''}`;
 }
 
 function readAutosaves() {
