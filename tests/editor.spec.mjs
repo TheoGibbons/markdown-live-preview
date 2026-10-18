@@ -247,6 +247,59 @@ test('hover menu stays open while crossing into a preview to scroll, select and 
     await expect(menu).toBeHidden();
 });
 
+test('preview rename button renames an autosave and an empty name restores the default', async ({ page }) => {
+    const content = Array.from({ length: 80 }, (_, index) => `Rename line ${index}`).join('\n');
+    await page.addInitScript(({ key, content }) => localStorage.setItem(key, JSON.stringify([
+        { id: 'rename-me', name: 'Autosave (2026-10-14 9:45:24 AM)', content },
+        { id: 'keep-me', name: 'Autosave (2026-10-14 9:45:34 AM)', content: 'Other draft' }
+    ])), { key: AUTOSAVES_KEY, content });
+    await page.clock.install();
+    await openEditor(page);
+    const menu = page.locator('#autosave-menu');
+    const preview = page.locator('#autosave-preview');
+    const rename = page.locator('#autosave-rename');
+    const entries = page.locator('#autosave-list button');
+    const defaultName = 'Autosave (2026-10-14 9:45:24 AM) Rename line 0 Rename line 1';
+
+    await page.locator('#autosave-dropdown summary').hover();
+    await entries.last().hover();
+    await preview.hover();
+    await page.clock.fastForward(500);
+    await expect(preview).toBeVisible();
+    // The button stays in the preview's top right corner while scrolling.
+    await page.mouse.wheel(0, 600);
+    await expect.poll(() => preview.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    const previewBox = await preview.boundingBox();
+    const renameBox = await rename.boundingBox();
+    expect(renameBox.y - previewBox.y).toBeGreaterThanOrEqual(0);
+    expect(renameBox.y - previewBox.y).toBeLessThan(16);
+    expect(previewBox.x + previewBox.width - (renameBox.x + renameBox.width)).toBeLessThan(32);
+
+    // Answer the prompt (null cancels it) and return the name it suggested.
+    const renameTo = async (value) => {
+        let suggested;
+        page.once('dialog', (dialog) => {
+            suggested = dialog.defaultValue();
+            return value === null ? dialog.dismiss() : dialog.accept(value);
+        });
+        await rename.click();
+        return suggested;
+    };
+    expect(await renameTo('  Meeting notes  ')).toContain(defaultName);
+    await expect(entries.last()).toHaveText('Meeting notes');
+    await expect(entries.first()).toHaveText('Autosave (2026-10-14 9:45:34 AM) Other draft');
+    expect(await autosaves(page)).toMatchObject([{ id: 'rename-me', customName: 'Meeting notes' }, { id: 'keep-me' }]);
+    await expect(preview).toBeVisible();
+    await expect(menu).toBeVisible();
+
+    expect(await renameTo(null)).toBe('Meeting notes');
+    await expect(entries.last()).toHaveText('Meeting notes');
+
+    await renameTo('   ');
+    await expect(entries.last()).toContainText(defaultName);
+    expect((await autosaves(page))[0]).not.toHaveProperty('customName');
+});
+
 test('storage failure preserves history and retries the pending autosave', async ({ page }) => {
     await page.clock.install();
     await openEditor(page);

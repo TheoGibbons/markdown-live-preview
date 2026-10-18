@@ -181,6 +181,26 @@ header a:hover {
     box-sizing: border-box;
 }
 
+#autosave-rename {
+    /* Stay in the top right while the preview scrolls; text wraps around it. */
+    float: right;
+    position: sticky;
+    top: 8px;
+    margin: 8px 8px 0 4px;
+    padding: 2px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    color: inherit;
+    font: 12px/1.5 Helvetica, arial, freesans, clean, sans-serif;
+    cursor: pointer;
+}
+
+#autosave-rename:hover,
+#autosave-rename:focus-visible {
+    background: #e8eef5;
+}
+
 #autosave-preview pre {
     padding: 12px;
     margin: 0;
@@ -441,5 +461,15 @@ header input[type="checkbox"] {
 
 [data-theme="dark"] #autosave-list button:hover,
 [data-theme="dark"] #autosave-list button:focus-visible {
+  background: #373e47;
+}
+
+[data-theme="dark"] #autosave-rename {
+  background: #22272e;
+  border-color: #555;
+}
+
+[data-theme="dark"] #autosave-rename:hover,
+[data-theme="dark"] #autosave-rename:focus-visible {
   background: #373e47;
 }

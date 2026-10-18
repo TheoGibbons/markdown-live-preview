@@ -15,11 +15,16 @@ function nameWithExcerpt(name, content) {
     return `${timestamp} ${excerpt.slice(0, 200).join('')}${excerpt.length > 200 ? '…' : ''}`;
 }
 
+function displayName(autosave) {
+    return autosave.customName || nameWithExcerpt(autosave.name, autosave.content);
+}
+
 function readAutosaves() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     if (!Array.isArray(saved) || saved.some((item) => !item ||
         typeof item.id !== 'string' || typeof item.name !== 'string' ||
-        typeof item.content !== 'string')) {
+        typeof item.content !== 'string' ||
+        (item.customName !== undefined && typeof item.customName !== 'string'))) {
         throw new Error('Invalid autosave history');
     }
     return saved;
@@ -33,6 +38,7 @@ export function setupAutosave(editor, loadContent) {
     const status = document.querySelector('#autosave-status');
     const menu = document.querySelector('#autosave-menu');
     const preview = document.querySelector('#autosave-preview');
+    const renameButton = document.querySelector('#autosave-rename');
     let lastSavedContent = editor.getValue();
     let previewTimer;
     let closeTimer;
@@ -114,7 +120,7 @@ export function setupAutosave(editor, loadContent) {
             const item = document.createElement('li');
             const button = document.createElement('button');
             button.type = 'button';
-            button.textContent = nameWithExcerpt(autosave.name, autosave.content);
+            button.textContent = displayName(autosave);
             button.addEventListener('mouseenter', () => showPreview(button, autosave));
             button.addEventListener('mouseleave', scheduleHidePreview);
             button.addEventListener('focus', () => showPreview(button, autosave));
@@ -174,6 +180,29 @@ export function setupAutosave(editor, loadContent) {
         if (event.detail && window.matchMedia('(hover: hover)').matches) {
             event.preventDefault();
             dropdown.open = true;
+        }
+    });
+    renameButton.addEventListener('click', () => {
+        try {
+            const current = readAutosaves().find((item) => item.id === previewId);
+            if (!current) return;
+            const name = window.prompt('Rename autosave (leave empty to restore the default name):', displayName(current));
+            if (name === null) return;
+            // Re-read in case another tab saved while the prompt was open.
+            const autosaves = readAutosaves();
+            const autosave = autosaves.find((item) => item.id === current.id);
+            if (!autosave) return;
+            if (name.trim()) {
+                autosave.customName = name.trim();
+            } else {
+                delete autosave.customName;
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(autosaves));
+            status.textContent = '';
+            summary.textContent = 'Autosaves';
+            renderList(autosaves);
+        } catch {
+            reportError();
         }
     });
     preview.addEventListener('pointerenter', () => {
