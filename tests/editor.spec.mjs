@@ -66,7 +66,7 @@ test('all built-in assets, unused diagram code and the draft work after an offli
     await expect(page.locator('#output .mermaid svg')).toBeVisible();
     expect(await page.locator('#output img').evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
 
-    await page.locator('#theme-checkbox').check();
+    await page.locator('#theme-button').click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     expect(await page.locator('#gh-markdown-link').evaluate((link) => !!link.sheet)).toBe(true);
 
@@ -79,7 +79,7 @@ test('all built-in assets, unused diagram code and the draft work after an offli
 
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.locator('#copy-button').click();
-    await expect(page.locator('#copy-button')).toHaveText('Copied!');
+    await expect(page.locator('#copy-button')).toHaveClass(/copied/);
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Works offline');
 
     await page.evaluate(() => { window.print = () => { window.printCalled = true; }; });
@@ -315,9 +315,57 @@ test('storage failure preserves history and retries the pending autosave', async
     await openDraft(page, 'Pending snapshot');
     await page.clock.fastForward(10_000);
     expect(await autosaves(page)).toHaveLength(1);
-    await expect(page.locator('#autosave-dropdown summary')).toHaveText('Autosaves (error)');
+    await expect(page.locator('#autosave-dropdown summary')).toHaveAccessibleName('Autosaves (error)');
     await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
     await page.clock.fastForward(10_000);
     expect(await autosaves(page)).toMatchObject([{ content: 'Existing snapshot' }, { content: 'Pending snapshot' }]);
-    await expect(page.locator('#autosave-dropdown summary')).toHaveText('Autosaves');
+    await expect(page.locator('#autosave-dropdown summary')).toHaveAccessibleName('Autosaves');
+});
+
+test('clear autosaves the text and empties the editor without confirmation', async ({ page }) => {
+    const dialogs = [];
+    page.on('dialog', (dialog) => {
+        dialogs.push(dialog.message());
+        dialog.dismiss();
+    });
+    await page.clock.install();
+    await openEditor(page);
+    await openDraft(page, 'Text to clear');
+    await page.locator('#clear-button').click();
+    await expect(page.locator('#output')).toHaveText('');
+    await expect(page.locator('.monaco-editor .view-lines')).toHaveText('');
+    expect(await autosaves(page)).toMatchObject([{ content: 'Text to clear' }]);
+    await page.locator('#autosave-dropdown summary').hover();
+    await expect(page.locator('#autosave-list button')).toHaveCount(1);
+
+    // The empty editor is not saved, and clearing it again changes nothing.
+    await page.clock.fastForward(10_000);
+    await page.locator('#clear-button').click();
+    await page.clock.fastForward(10_000);
+    expect(await autosaves(page)).toHaveLength(1);
+    await page.reload();
+    await expect(page.locator('.monaco-editor textarea')).toBeVisible();
+    await expect(page.locator('#output')).toHaveText('');
+    expect(dialogs).toEqual([]);
+});
+
+test('clear keeps the text when it cannot be autosaved', async ({ page }) => {
+    const dialogs = [];
+    page.on('dialog', (dialog) => {
+        dialogs.push(dialog.message());
+        dialog.dismiss();
+    });
+    await openEditor(page);
+    await page.evaluate((key) => {
+        const setItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (name, value) {
+            if (name === key) throw new DOMException('Storage full', 'QuotaExceededError');
+            return setItem.call(this, name, value);
+        };
+    }, AUTOSAVES_KEY);
+    await openDraft(page, 'Unsaved text');
+    await page.locator('#clear-button').click();
+    await expect.poll(() => dialogs).toEqual(['Unable to autosave the current text, so the editor was not cleared.']);
+    await expect(page.locator('#output')).toHaveText('Unsaved text');
+    await expect(page.locator('#autosave-dropdown summary')).toHaveAccessibleName('Autosaves (error)');
 });

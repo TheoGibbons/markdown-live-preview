@@ -106,9 +106,16 @@ export function setupAutosave(editor, loadContent) {
         }
     };
 
+    const setError = (error) => {
+        const label = error ? 'Autosaves (error)' : 'Autosaves';
+        summary.classList.toggle('error', error);
+        summary.setAttribute('aria-label', label);
+        summary.title = label;
+    };
+
     const reportError = () => {
         status.textContent = 'Unable to save or read autosaves. Browser storage may be full or unavailable.';
-        summary.textContent = 'Autosaves (error)';
+        setError(true);
     };
 
     const renderList = (autosaves) => {
@@ -140,15 +147,17 @@ export function setupAutosave(editor, loadContent) {
         try {
             renderList(readAutosaves());
             status.textContent = '';
-            summary.textContent = 'Autosaves';
+            setError(false);
         } catch {
             reportError();
         }
     };
 
-    setInterval(() => {
+    // Returns false only when changed text could not be saved.
+    const saveNow = () => {
         const content = editor.getValue();
-        if (content === lastSavedContent) return;
+        // An empty document has nothing worth restoring.
+        if (content === lastSavedContent || !content) return true;
         try {
             const autosaves = readAutosaves();
             const date = new Date();
@@ -161,13 +170,17 @@ export function setupAutosave(editor, loadContent) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(autosaves));
             lastSavedContent = content;
             status.textContent = '';
-            summary.textContent = 'Autosaves';
+            setError(false);
             renderList(autosaves);
+            return true;
         } catch {
             // Keep the previous history and retry changed content on the next tick.
             reportError();
+            return false;
         }
-    }, INTERVAL_MS);
+    };
+
+    setInterval(saveNow, INTERVAL_MS);
 
     dropdown.addEventListener('pointerenter', (event) => {
         if (event.pointerType === 'touch') return;
@@ -199,7 +212,7 @@ export function setupAutosave(editor, loadContent) {
             }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(autosaves));
             status.textContent = '';
-            summary.textContent = 'Autosaves';
+            setError(false);
             renderList(autosaves);
         } catch {
             reportError();
@@ -247,4 +260,5 @@ export function setupAutosave(editor, loadContent) {
         if (event.key === STORAGE_KEY || event.key === null) refreshList();
     });
     refreshList();
+    return saveNow;
 }

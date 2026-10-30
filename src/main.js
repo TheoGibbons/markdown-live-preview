@@ -5,9 +5,9 @@ import DOMPurify from 'dompurify';
 import mermaid from 'mermaid';
 import { setupPwa } from './pwa.js';
 import { setupAutosave } from './autosave.js';
+import { setupTouchSelection } from './touchSelection.js';
 
 const init = () => {
-    let hasEdited = false;
     let scrollBarSync = false;
 
     const localStorageNamespace = 'com.markdownlivepreview';
@@ -15,7 +15,7 @@ const init = () => {
     const localStorageScrollBarKey = 'scroll_bar_settings';
     const localStorageThemeKey = 'theme_settings';
     const localStorageSplitRatioKey = 'com.markdownlivepreview_split_ratio';
-    const confirmationMessage = 'Are you sure you want to reset? Your changes will be lost.';
+    const localStorageHiddenPaneKey = 'com.markdownlivepreview_hidden_pane';
     let mermaidRenderTimer = null;
     let mermaidRenderVersion = 0;
     // default template
@@ -122,11 +122,20 @@ This web site is using ${"`"}markedjs/marked${"`"}.
             folding: false
         });
 
-        editor.onDidChangeModelContent(() => {
-            let changed = editor.getValue() != defaultInput;
-            if (changed) {
-                hasEdited = true;
+        // Monaco's context menu has Cut, Copy and Paste but no Select All, which touch screens need.
+        editor.addAction({
+            id: 'select-all',
+            label: 'Select All',
+            contextMenuGroupId: '9_cutcopypaste',
+            contextMenuOrder: 5,
+            run: (ed) => {
+                ed.setSelection(ed.getModel().getFullModelRange());
+                // The menu leaves focus behind; Copy and typing should act on the selection.
+                ed.focus();
             }
+        });
+
+        editor.onDidChangeModelContent(() => {
             let value = editor.getValue();
             convert(value);
             saveLastContent(value);
@@ -265,39 +274,23 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         scheduleMermaidRender();
     };
 
-    // Reset input text
-    let reset = () => {
-        let changed = editor.getValue() != defaultInput;
-        if (hasEdited || changed) {
-            var confirmed = window.confirm(confirmationMessage);
-            if (!confirmed) {
-                return;
-            }
-        }
-        presetValue(defaultInput);
-        document.querySelectorAll('.column').forEach((element) => {
-            element.scrollTo({ top: 0 });
-        });
-    };
-
     let presetValue = (value) => {
         editor.setValue(value);
         editor.revealPosition({ lineNumber: 1, column: 1 });
         editor.focus();
-        hasEdited = false;
     };
 
     // ----- sync scroll position -----
 
     let initScrollBarSync = (settings) => {
-        let checkbox = document.querySelector('#sync-scroll-checkbox');
-        checkbox.checked = settings;
-        scrollBarSync = settings;
+        let button = document.querySelector('#sync-scroll-button');
+        scrollBarSync = settings === true || settings === 'true';
+        button.setAttribute('aria-pressed', String(scrollBarSync));
 
-        checkbox.addEventListener('change', (event) => {
-            let checked = event.currentTarget.checked;
-            scrollBarSync = checked;
-            saveScrollBarSettings(checked);
+        button.addEventListener('click', () => {
+            scrollBarSync = !scrollBarSync;
+            button.setAttribute('aria-pressed', String(scrollBarSync));
+            saveScrollBarSettings(scrollBarSync);
         });
     };
 
@@ -334,12 +327,17 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     // ----- theme toggle (dark/light) -----
     let setTheme = (enabled) => {
         document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
+        // The icon (swapped in CSS) and label show the theme a click switches to.
+        const button = document.querySelector('#theme-button');
+        const label = enabled ? 'Switch to light mode' : 'Switch to dark mode';
+        button.setAttribute('aria-label', label);
+        button.title = label;
     };
 
     let initThemeToggle = (settings) => {
-        let checkbox = document.querySelector('#theme-checkbox');
-        if (!checkbox) return;
-        checkbox.checked = settings;
+        let button = document.querySelector('#theme-button');
+        if (!button) return;
+        let enabled = settings;
         setTheme(settings);
 
         // set Monaco editor theme to match page theme
@@ -349,13 +347,13 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         // set preview css to match theme
         setPreviewCss(settings);
 
-        checkbox.addEventListener('change', (event) => {
-            let checked = event.currentTarget.checked;
-            setTheme(checked);
-            saveThemeSettings(checked);
-            setPreviewCss(checked);
+        button.addEventListener('click', () => {
+            enabled = !enabled;
+            setTheme(enabled);
+            saveThemeSettings(enabled);
+            setPreviewCss(enabled);
             if (monaco && monaco.editor && typeof monaco.editor.setTheme === 'function') {
-                monaco.editor.setTheme(checked ? 'vs-dark' : 'vs');
+                monaco.editor.setTheme(enabled ? 'vs-dark' : 'vs');
             }
             renderMermaidDiagrams();
         });
@@ -384,10 +382,12 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     };
 
     let notifyCopied = () => {
-        let labelElement = document.querySelector("#copy-button a");
-        labelElement.innerHTML = "Copied!";
+        let button = document.querySelector("#copy-button");
+        button.classList.add('copied');
+        button.title = 'Copied!';
         setTimeout(() => {
-            labelElement.innerHTML = "Copy";
+            button.classList.remove('copied');
+            button.title = 'Copy the Markdown';
         }, 1000)
     };
 
@@ -473,10 +473,15 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         });
     };
 
-    let setupResetButton = () => {
-        document.querySelector("#reset-button").addEventListener('click', (event) => {
+    let setupClearButton = (saveAutosave) => {
+        document.querySelector("#clear-button").addEventListener('click', (event) => {
             event.preventDefault();
-            reset();
+            // The autosave replaces a confirmation: the cleared text can be restored from the Autosaves menu.
+            if (!saveAutosave()) {
+                window.alert('Unable to autosave the current text, so the editor was not cleared.');
+                return;
+            }
+            presetValue('');
         });
     };
 
@@ -578,6 +583,11 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         };
 
         const applySplitRatio = () => {
+            // A lone pane fills the container; the saved ratio applies again once both are shown.
+            if (leftPane.hidden || rightPane.hidden) {
+                leftPane.style.width = rightPane.style.width = '100%';
+                return;
+            }
             const availableWidth = container.getBoundingClientRect().width - divider.offsetWidth;
             const minWidth = Math.min(100, availableWidth / 2);
             const leftWidth = Math.max(minWidth, Math.min(availableWidth * lastLeftRatio, availableWidth - minWidth));
@@ -638,6 +648,53 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         });
 
         window.addEventListener('resize', applySplitRatio);
+        return applySplitRatio;
+    };
+
+    let setupPaneToggle = (applySplitRatio) => {
+        const divider = document.getElementById('split-divider');
+        const toggles = [
+            { pane: document.getElementById('edit'), button: document.getElementById('toggle-edit-pane') },
+            { pane: document.getElementById('preview'), button: document.getElementById('toggle-preview-pane') }
+        ];
+
+        const showPanes = (hiddenPaneId) => {
+            toggles.forEach(({ pane, button }) => {
+                pane.hidden = pane.id === hiddenPaneId;
+                button.setAttribute('aria-pressed', String(!pane.hidden));
+                // Keep at least one pane on screen.
+                button.disabled = hiddenPaneId !== null && !pane.hidden;
+            });
+            divider.hidden = hiddenPaneId !== null;
+            applySplitRatio();
+        };
+
+        let hiddenPaneId = null;
+        try {
+            const saved = localStorage.getItem(localStorageHiddenPaneKey);
+            if (toggles.some(({ pane }) => pane.id === saved)) {
+                hiddenPaneId = saved;
+            }
+        } catch (e) {
+            // Show both panes if storage is unavailable.
+        }
+        showPanes(hiddenPaneId);
+
+        toggles.forEach(({ pane, button }) => {
+            button.addEventListener('click', () => {
+                hiddenPaneId = pane.hidden ? null : pane.id;
+                showPanes(hiddenPaneId);
+                try {
+                    if (hiddenPaneId === null) {
+                        localStorage.removeItem(localStorageHiddenPaneKey);
+                    } else {
+                        localStorage.setItem(localStorageHiddenPaneKey, hiddenPaneId);
+                    }
+                } catch (e) {
+                    // Keep the toggles usable when browser storage is unavailable.
+                }
+            });
+        });
     };
 
     // ----- entry point -----
@@ -648,8 +705,8 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     } else {
         presetValue(defaultInput);
     }
+    setupTouchSelection(editor);
     setupOpenButton();
-    setupResetButton();
     setupCopyButton(editor);
     setupExportButton();
 
@@ -666,8 +723,8 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     }
     initThemeToggle(themeSettings);
 
-    setupDivider();
-    setupAutosave(editor, presetValue);
+    setupPaneToggle(setupDivider());
+    setupClearButton(setupAutosave(editor, presetValue));
 };
 
 window.addEventListener("load", () => {

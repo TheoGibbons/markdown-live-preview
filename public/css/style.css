@@ -42,7 +42,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
+  padding: 4px 12px;
   width: 100%;
   background-color: #444;
   font-size: 12px;
@@ -63,13 +63,16 @@ header a:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px 0;
+    gap: 4px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-#open-button,
 #install-button,
 #update-button {
-    margin-left: 16px;
+    margin-left: 8px;
     padding: 0;
     border: 0;
     background: none;
@@ -78,10 +81,48 @@ header a:hover {
     cursor: pointer;
 }
 
-#open-button:hover,
 #install-button:hover,
 #update-button:hover {
     text-decoration: underline;
+}
+
+header svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+header svg text {
+    fill: currentColor;
+    stroke: none;
+    font: bold 5.5px Helvetica, arial, freesans, clean, sans-serif;
+}
+
+.icon-button {
+    display: flex;
+    padding: 6px;
+    border: 0;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.icon-button:hover {
+    background: #ffffff1a;
+}
+
+.icon-button[aria-pressed="true"] {
+    background: #ffffff2e;
+}
+
+.icon-button[aria-pressed="true"]:hover {
+    background: #ffffff40;
 }
 
 #open-button:disabled {
@@ -89,34 +130,90 @@ header a:hover {
     cursor: wait;
 }
 
-#reset-button {
-    margin-left: 16px;
+/* Swap icons to show the copy result and the theme a click switches to. */
+#copy-button .copied-icon,
+#copy-button.copied .copy-icon,
+#theme-button .sun-icon,
+[data-theme="dark"] #theme-button .moon-icon {
+    display: none;
 }
 
-#copy-button {
-    margin-left: 16px;
+#copy-button.copied .copied-icon,
+[data-theme="dark"] #theme-button .sun-icon {
+    display: block;
 }
 
-#export-button {
-    margin-left: 16px;
+#pane-toggle {
+    display: flex;
 }
 
-#sync-button {
-    margin-left: 16px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+#pane-toggle button {
+    display: flex;
+    padding: 5px 6px;
+    border: 1px solid #888;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+/* Fill in the pane's side of the icon while that pane is showing. */
+#pane-toggle .pane-fill {
+    stroke: none;
+}
+
+#pane-toggle button[aria-pressed="true"] .pane-fill {
+    fill: currentColor;
+}
+
+#pane-toggle button:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+#pane-toggle button:last-child {
+    border-left: 0;
+    border-radius: 0 3px 3px 0;
+}
+
+#pane-toggle button[aria-pressed="true"] {
+    background: #ffffff2e;
+}
+
+#pane-toggle button:enabled:hover {
+    background: #ffffff1a;
+}
+
+#pane-toggle button[aria-pressed="true"]:enabled:hover {
+    background: #ffffff40;
+}
+
+/* The last visible pane cannot be hidden. */
+#pane-toggle button:disabled {
+    cursor: default;
 }
 
 #autosave-dropdown {
     position: relative;
-    margin-left: 16px;
 }
 
 #autosave-dropdown summary {
-    cursor: pointer;
-    white-space: nowrap;
+    position: relative;
+    list-style: none;
+}
+
+#autosave-dropdown summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Flag storage errors on the icon; the label and status text give the details. */
+#autosave-dropdown summary.error::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff7b72;
 }
 
 #autosave-menu {
@@ -207,12 +304,6 @@ header a:hover {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     font: 12px/1.5 monospace;
-}
-
-header input[type="checkbox"] {
-    vertical-align: middle;
-    margin-right: 4px;
-    margin-top: 0px;
 }
 
 #github {
@@ -406,6 +497,7 @@ header input[type="checkbox"] {
 }
 
 .split-divider {
+  flex-shrink: 0;
   width: 5px;
   background: #ccc;
   cursor: col-resize;
