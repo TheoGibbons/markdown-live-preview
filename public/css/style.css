@@ -13,7 +13,10 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  height:100vh;
+  height: 100vh;
+  /* On mobile, 100vh is taller than the visible area while the browser's address bar shows.
+     The page could then scroll and leave the header out of view, so fit the visible area. */
+  height: 100dvh;
 }
 
 h1, h2, h3, h4, h5, h6, p {
