@@ -34,7 +34,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" type="text/css" href="%BASE_URL%css/style.css?v=459f0276712c">
+    <link rel="stylesheet" type="text/css" href="%BASE_URL%css/style.css?v=a08c0976c3db">
     <link rel="icon" type="image/png" href="%BASE_URL%favicon.png">
     <script type="module" src="/src/main.js?v=1.13.0"></script>
     <title>Markdown Live Preview</title>
@@ -44,28 +44,28 @@
 
     <header>
         <div id="menu-items">
-            <button type="button" id="open-button" class="icon-button" aria-label="Open" title="Open a Markdown file"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 12.5V4a1 1 0 0 1 1-1h3l1.5 1.5H12a1 1 0 0 1 1 1V7"/><path d="M2 12.5 4 7.5h10.5l-2 5z"/></svg></button>
+            <button type="button" id="open-button" class="icon-button" aria-label="Open" title="Open a Markdown file"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 12.5V4a1 1 0 0 1 1-1h3l1.5 1.5H12a1 1 0 0 1 1 1V7"/><path d="M2 12.5 4 7.5h10.5l-2 5z"/></svg><span class="label">Open</span></button>
             <input type="file" id="open-file-input" accept=".md,.markdown,text/markdown" hidden>
-            <button type="button" id="copy-button" class="icon-button" aria-label="Copy" title="Copy the Markdown"><svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8" rx="1"/><path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg><svg class="copied-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5l3 3 7-7"/></svg></button>
-            <button type="button" id="export-button" class="icon-button" aria-label="Export PDF" title="Export the preview as a PDF"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 6V2.5a1 1 0 0 1 1-1h5l3 3V6M12.5 13.5v.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-.5M9.5 1.5v3h3"/><text x="8" y="12" text-anchor="middle">PDF</text></svg></button>
-            <button type="button" id="clear-button" class="icon-button" aria-label="Clear" title="Clear the editor. The current text is saved to Autosaves first."><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.5 2.5l4 4-6 6H5l-2.5-2.5z"/><path d="M6 6l4 4M8 13.5h5.5"/></svg></button>
+            <button type="button" id="copy-button" class="icon-button" aria-label="Copy" title="Copy the Markdown"><svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8" rx="1"/><path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg><svg class="copied-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5l3 3 7-7"/></svg><span class="label">Copy</span></button>
+            <button type="button" id="export-button" class="icon-button" aria-label="Export PDF" title="Export the preview as a PDF"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 6V2.5a1 1 0 0 1 1-1h5l3 3V6M12.5 13.5v.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-.5M9.5 1.5v3h3"/><text x="8" y="12" text-anchor="middle">PDF</text></svg><span class="label">Export PDF</span></button>
+            <button type="button" id="clear-button" class="icon-button" aria-label="Clear" title="Clear the editor. The current text is saved to Autosaves first."><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.5 2.5l4 4-6 6H5l-2.5-2.5z"/><path d="M6 6l4 4M8 13.5h5.5"/></svg><span class="label">Clear</span></button>
             <details id="autosave-dropdown">
-              <summary class="icon-button" aria-label="Autosaves" title="Autosaves"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.7"/><path d="M2.5 2.7v3h3"/><path d="M8 5v3l2 1.5"/></svg></summary>
+              <summary class="icon-button" aria-label="Autosaves" title="Autosaves"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.7"/><path d="M2.5 2.7v3h3"/><path d="M8 5v3l2 1.5"/></svg><span class="label">Autosaves</span></summary>
               <div id="autosave-menu">
                 <p id="autosave-empty">No autosaves yet. Changes are saved every 10 seconds.</p>
                 <ul id="autosave-list" aria-label="Saved drafts"></ul>
                 <p id="autosave-status" role="status"></p>
               </div>
             </details>
-            <button type="button" id="install-button" hidden>Install</button>
-            <button type="button" id="update-button" hidden>Update</button>
-            <button type="button" id="sync-scroll-button" class="icon-button" aria-pressed="false" aria-label="Sync scroll" title="Sync scroll"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2v12M2.5 4l2-2 2 2M2.5 12l2 2 2-2M11.5 2v12M9.5 4l2-2 2 2M9.5 12l2 2 2-2M4.5 8h7"/></svg></button>
-            <button type="button" id="theme-button" class="icon-button" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="moon-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z"/></svg><svg class="sun-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06"/></svg></button>
+            <button type="button" id="install-button" class="icon-button" aria-label="Install" title="Install this app" hidden><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8M5 7l3 3 3-3M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2"/></svg><span class="label">Install</span></button>
+            <button type="button" id="update-button" class="icon-button" aria-label="Update" title="Update to the latest version" hidden><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6"/><path d="M8 11V5M5.5 7.5 8 5l2.5 2.5"/></svg><span class="label">Update</span></button>
+            <button type="button" id="sync-scroll-button" class="icon-button" aria-pressed="false" aria-label="Sync scroll" title="Sync scroll"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2v12M2.5 4l2-2 2 2M2.5 12l2 2 2-2M11.5 2v12M9.5 4l2-2 2 2M9.5 12l2 2 2-2M4.5 8h7"/></svg><span class="label">Sync scroll</span></button>
+            <button type="button" id="theme-button" class="icon-button" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="moon-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z"/></svg><svg class="sun-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06"/></svg><span class="label">Dark mode</span></button>
             <div id="pane-toggle" role="group" aria-label="Panes">
-              <button type="button" id="toggle-edit-pane" aria-controls="edit" aria-pressed="true" aria-label="Editor" title="Show or hide the editor"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect class="pane-fill" x="2" y="3" width="4.5" height="10" rx="0.5"/><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6.5 3v10"/></svg></button><button type="button" id="toggle-preview-pane" aria-controls="preview" aria-pressed="true" aria-label="Preview" title="Show or hide the preview"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect class="pane-fill" x="9.5" y="3" width="4.5" height="10" rx="0.5"/><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M9.5 3v10"/></svg></button>
+              <button type="button" id="toggle-edit-pane" aria-controls="edit" aria-pressed="true" aria-label="Editor" title="Show or hide the editor"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect class="pane-fill" x="2" y="3" width="4.5" height="10" rx="0.5"/><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6.5 3v10"/></svg><span class="label">Editor</span></button><button type="button" id="toggle-preview-pane" aria-controls="preview" aria-pressed="true" aria-label="Preview" title="Show or hide the preview"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect class="pane-fill" x="9.5" y="3" width="4.5" height="10" rx="0.5"/><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M9.5 3v10"/></svg><span class="label">Preview</span></button>
             </div>
         </div>
-        <div id="github"><a href="https://github.com/TheoGibbons/markdown-live-preview"><img src="%BASE_URL%image/GitHub-Mark-Light-32px.webp" alt="GitHub repository"></a></div>
+        <a id="github" class="icon-button" href="https://github.com/TheoGibbons/markdown-live-preview" aria-label="GitHub repository" title="View the source on GitHub"><img src="%BASE_URL%image/GitHub-Mark-Light-32px.webp" alt=""><span class="label">GitHub</span></a>
     </header>
 
     <div id="container" class="split-container">

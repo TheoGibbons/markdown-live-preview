@@ -58,10 +58,6 @@ header a:link, header a:hover, header a:visited, header a:active {
   color: #fff;
 }
 
-header a:hover {
-  text-decoration: underline;
-}
-
 #menu-items {
     display: flex;
     flex-wrap: wrap;
@@ -71,22 +67,6 @@ header a:hover {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-
-#install-button,
-#update-button {
-    margin-left: 8px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-}
-
-#install-button:hover,
-#update-button:hover {
-    text-decoration: underline;
 }
 
 header svg {
@@ -108,12 +88,27 @@ header svg text {
 
 .icon-button {
     display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px;
     border: 0;
     border-radius: 3px;
     background: none;
     color: inherit;
+    font: inherit;
+    text-decoration: none;
     cursor: pointer;
+}
+
+.icon-button[hidden] {
+    display: none;
+}
+
+/* Text beside the icons, shown when the header has room for it. */
+header .label {
+    display: none;
+    line-height: 16px;
+    white-space: nowrap;
 }
 
 .icon-button:hover {
@@ -152,10 +147,13 @@ header svg text {
 
 #pane-toggle button {
     display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 5px 6px;
     border: 1px solid #888;
     background: none;
     color: inherit;
+    font: inherit;
     cursor: pointer;
 }
 
@@ -208,15 +206,25 @@ header svg text {
 }
 
 /* Flag storage errors on the icon; the label and status text give the details. */
-#autosave-dropdown summary.error::after {
+#autosave-dropdown summary.error::after,
+#update-button::after {
     content: '';
     position: absolute;
     top: 3px;
-    right: 3px;
+    left: 19px;
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: #ff7b72;
+}
+
+/* Draw the eye to Update, which only shows when a new version is ready. */
+#update-button {
+    position: relative;
+}
+
+#update-button::after {
+    background: #58a6ff;
 }
 
 #autosave-menu {
@@ -309,18 +317,56 @@ header svg text {
     font: 12px/1.5 monospace;
 }
 
-#github {
-    padding-right: 32px;
-}
-
+/* The solid mark looks larger than the outline icons at the same size. */
 #github img {
   display: block;
-  width: 16px;
+  width: 14px;
+  height: 14px;
+  margin: 1px;
 }
 
-#github a {
-  display: block;
-  width: 16px;
+/* Keep every button on one line on phones. */
+@media (max-width: 420px) {
+  header {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  #menu-items {
+    gap: 2px;
+  }
+
+  .icon-button {
+    padding: 5px;
+  }
+
+  #pane-toggle button {
+    padding: 4px 5px;
+  }
+
+  #autosave-dropdown summary.error::after,
+  #update-button::after {
+    left: 18px;
+  }
+}
+
+@media (min-width: 1120px) {
+  header .label {
+    display: inline;
+  }
+
+  .icon-button {
+    padding: 6px 8px;
+  }
+
+  #pane-toggle button {
+    padding: 5px 8px;
+  }
+
+  #autosave-dropdown summary.error::after,
+  #update-button::after {
+    left: 21px;
+  }
 }
 
 #container {

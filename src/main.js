@@ -327,11 +327,12 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     // ----- theme toggle (dark/light) -----
     let setTheme = (enabled) => {
         document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
-        // The icon (swapped in CSS) and label show the theme a click switches to.
+        // The icon (swapped in CSS), text and label show the theme a click switches to.
         const button = document.querySelector('#theme-button');
         const label = enabled ? 'Switch to light mode' : 'Switch to dark mode';
         button.setAttribute('aria-label', label);
         button.title = label;
+        button.querySelector('.label').textContent = enabled ? 'Light mode' : 'Dark mode';
     };
 
     let initThemeToggle = (settings) => {
