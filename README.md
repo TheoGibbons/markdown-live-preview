@@ -66,3 +66,15 @@ npm test
 
 ## License
 See [LICENSE](LICENSE).
+
+### Share a document
+
+Click **Share** to copy a link to the current Markdown. The link contains compressed,
+URL-safe text and opens with the editor hidden; recipients can show it using **Editor**.
+No backend or document upload is needed. Anyone with the link can read its contents,
+and the link is a snapshot, so later edits do not change it.
+
+Generated links are limited to 8,000 characters after compression. Longer documents
+must be shortened or shared as files. This is a conservative app limit, not a guarantee
+that every browser or messaging service accepts the link. Encoding and decoding use
+browser Compression Streams. Shared documents are limited to 1 MiB of UTF-8 text.

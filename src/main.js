@@ -1,3 +1,4 @@
+import { readSharedText, setupShareButton } from './share.js';
 import Storehouse from 'storehouse-js';
 import * as monaco from 'monaco-editor';
 import { marked } from 'marked';
@@ -7,7 +8,7 @@ import { setupPwa } from './pwa.js';
 import { setupAutosave } from './autosave.js';
 import { setupTouchSelection } from './touchSelection.js';
 
-const init = () => {
+const init = async () => {
     let scrollBarSync = false;
 
     const localStorageNamespace = 'com.markdownlivepreview';
@@ -652,7 +653,7 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         return applySplitRatio;
     };
 
-    let setupPaneToggle = (applySplitRatio) => {
+    let setupPaneToggle = (applySplitRatio, shared = false) => {
         const divider = document.getElementById('split-divider');
         const toggles = [
             { pane: document.getElementById('edit'), button: document.getElementById('toggle-edit-pane') },
@@ -679,6 +680,7 @@ This web site is using ${"`"}markedjs/marked${"`"}.
         } catch (e) {
             // Show both panes if storage is unavailable.
         }
+        if (shared) hiddenPaneId = 'edit';
         showPanes(hiddenPaneId);
 
         toggles.forEach(({ pane, button }) => {
@@ -706,6 +708,19 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     } else {
         presetValue(defaultInput);
     }
+    const saveAutosave = setupAutosave(editor, presetValue);
+    let sharedText = null;
+    try {
+        sharedText = await readSharedText(window.location.search);
+        if (sharedText !== null) {
+            if (!saveAutosave()) throw new Error('Unable to preserve your current draft.');
+            presetValue(sharedText);
+        }
+    } catch (error) {
+        sharedText = null;
+        window.alert(`Unable to open the shared document. ${error.message}`);
+    }
+    setupShareButton(editor);
     setupTouchSelection(editor);
     setupOpenButton();
     setupCopyButton(editor);
@@ -724,8 +739,8 @@ This web site is using ${"`"}markedjs/marked${"`"}.
     }
     initThemeToggle(themeSettings);
 
-    setupPaneToggle(setupDivider());
-    setupClearButton(setupAutosave(editor, presetValue));
+    setupPaneToggle(setupDivider(), sharedText !== null);
+    setupClearButton(saveAutosave);
 };
 
 window.addEventListener("load", () => {

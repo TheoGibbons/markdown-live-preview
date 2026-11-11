@@ -614,3 +614,17 @@ header .label {
 [data-theme="dark"] #autosave-rename:focus-visible {
   background: #373e47;
 }
+
+#share-dialog {
+  width: min(480px, calc(100vw - 64px));
+  border: 1px solid #888;
+  border-radius: 6px;
+  padding: 20px;
+  color: inherit;
+  background: inherit;
+}
+#share-dialog::backdrop { background: #0008; }
+#share-title { font-size: 1.25em; font-weight: bold; }
+#share-dialog p { margin: 12px 0; }
+#share-link { width: 100%; box-sizing: border-box; margin: 8px 0 16px; }
+#share-dialog form { text-align: right; }
